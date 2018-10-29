@@ -1,4 +1,8 @@
 .idea/
 .info/
 .env
+.flaskenv
+.python-version
 app.db
+__pycache__/
+certs/
