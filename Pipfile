@@ -14,6 +14,7 @@ gunicorn = "*"
 pymysql = "*"
 
 [dev-packages]
+httpie = "*"
 
 [requires]
 python_version = "3.6.6"
