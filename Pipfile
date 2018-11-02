@@ -12,6 +12,7 @@ flask-migrate = "*"
 flask-login = "*"
 gunicorn = "*"
 pymysql = "*"
+flask-httpauth = "*"
 
 [dev-packages]
 httpie = "*"
