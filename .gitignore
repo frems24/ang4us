@@ -1,5 +1,6 @@
 .idea/
 .info/
+logs/
 .env
 .python-version
 app.db
