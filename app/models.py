@@ -35,6 +35,12 @@ class PaginatedApiMixin:
         return data
 
 
+users_fisheries = db.Table('users_fisheries',
+                           db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+                           db.Column('fishery_id', db.Integer, db.ForeignKey('fishery.id'))
+                           )
+
+
 class User(PaginatedApiMixin, UserMixin, db.Model):
     """ 'user' table in database
         class UserMixin adds: is_authenticated, is_active, is_anonymous, get_id()
@@ -48,6 +54,7 @@ class User(PaginatedApiMixin, UserMixin, db.Model):
     about_me = db.Column(db.String(140))
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     posts = db.relationship('Post', backref='author', lazy='dynamic')
+    fisheries = db.relationship('Fishery', backref='author', lazy='dynamic')
 
     def __repr__(self):
         return f'<User {self.username}>'
@@ -111,6 +118,38 @@ class Post(db.Model):
 
     def __repr__(self):
         return f'<Post {self.body}>'
+
+
+class Fishery(PaginatedApiMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    reservoir_name = db.Column(db.String(40), index=True)
+    country = db.Column(db.String(40), index=True)
+    place = db.Column(db.String(140))
+    longitude = db.Column(db.Float)
+    latitude = db.Column(db.Float)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+    def __repr__(self):
+        return f'<Fishery {self.reservoir_name}>'
+
+    def to_dict(self):
+        data = {
+            'id': self.id,
+            'reservoir_name': self.reservoir_name,
+            'country': self.country,
+            'place': self.place,
+            'longitude': self.longitude,
+            'latitude': self.latitude,
+            '_links': {
+                'self': url_for('api.get_fishery', id=self.id)
+            }
+        }
+        return data
+
+    def from_dict(self, data):
+        for field in ['reservoir_name', 'country', 'place', 'longitude', 'latitude']:
+            if field in data:
+                setattr(self, field, data[field])
 
 
 @login.user_loader

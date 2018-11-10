@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Add Fishery</h1>
+    <form action="" method="post">
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.reservoir_name.label }}<br />
+            {{ form.reservoir_name(size=32) }}<br />
+            {% for error in form.reservoir_name.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.country.label }}<br />
+            {{ form.country(size=32) }}<br />
+            {% for error in form.country.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.place.label }}<br />
+            {{ form.place(cols=50, rows=4) }}<br />
+            {% for error in form.place.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.longitude.label }}<br />
+            {{ form.longitude(size = 32) }}<br />
+            {% for error in form.longitude.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.latitude.label }}<br />
+            {{ form.latitude(size = 32) }}<br />
+            {% for error in form.latitude.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>{{ form.submit() }}</p>
+    </form>
+{% endblock %}

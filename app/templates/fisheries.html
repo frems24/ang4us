@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>All known fisheries:</h2>
+    {% for fishery in fisheries %}
+        <table style="line-height: 0.3">
+            <tr valign="top">
+                <td>
+                    <h4>{{ fishery.country }}: {{ fishery.reservoir_name }}</h4>
+                    {% if fishery.longitude and fishery.latitude %}
+                        <p>{{ fishery.longitude }}, {{ fishery.latitude }}</p>
+                    {% endif %}
+                    {% if fishery.place %}
+                        <p>{{ fishery.place }}</p>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    {% endfor %}
+{% endblock %}

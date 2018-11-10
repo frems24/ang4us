@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField,  SubmitField
+from wtforms import StringField, TextAreaField,  SubmitField, FloatField
 from wtforms.validators import DataRequired, ValidationError, Length
 from app.models import User
 
@@ -21,3 +21,12 @@ class EditProfileForm(FlaskForm):
             user = User.query.filter_by(username=self.username.data).first()
             if user is not None:
                 raise ValidationError('Please use a different username.')
+
+
+class AddFisheryForm(FlaskForm):
+    reservoir_name = StringField('Reservoir Name', validators=[DataRequired()])
+    country = StringField('Country')
+    place = TextAreaField('Place name', validators=[Length(min=0, max=140)])
+    longitude = FloatField('Longitude')
+    latitude = FloatField('Latitude')
+    submit = SubmitField('Submit')

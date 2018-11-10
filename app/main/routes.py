@@ -2,8 +2,8 @@ from datetime import datetime
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import current_user, login_required
 from app import db
-from app.main.forms import EditProfileForm
-from app.models import User
+from app.main.forms import EditProfileForm, AddFisheryForm
+from app.models import User, Fishery
 from app.main import bp
 
 
@@ -58,3 +58,30 @@ def edit_profile():
         form.about_me.data = current_user.about_me
 
     return render_template('edit_profile.html', title='Edit Profile', form=form)
+
+
+@bp.route('/fisheries')
+@login_required
+def get_all_fisheries():
+    fisheries = Fishery.query.all()
+
+    return render_template('fisheries.html', title='Fisheries', fisheries=fisheries)
+
+
+@bp.route('/add_fishery', methods=['GET', 'POST'])
+@login_required
+def add_fishery():
+    form = AddFisheryForm()
+    if form.validate_on_submit():
+        fishery = Fishery(reservoir_name=form.reservoir_name.data)
+        fishery.country = form.country.data
+        fishery.country = form.country.data
+        fishery.place = form.place.data
+        fishery.longitude = form.longitude.data
+        fishery.latitude = form.latitude.data
+        db.session.add(fishery)
+        db.session.commit()
+        flash('New fishery has been added.')
+        return redirect(url_for('main.user', username=current_user.username))
+
+    return render_template('add_fishery.html', title='Add Fishery', form=form)
