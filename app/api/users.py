@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import jsonify, request, url_for
 from app import db
 from app.api import bp
@@ -6,7 +7,7 @@ from app.api.auth import token_auth
 from app.api.errors import bad_request
 
 
-@bp.route('/users/<int:id>', methods=['GET'])
+@bp.route('/users/<id>', methods=['GET'])
 @token_auth.login_required
 def get_user(id):
     return jsonify(User.query.get_or_404(id).to_dict())
@@ -33,7 +34,7 @@ def create_user():
         return bad_request('please use a different email address')
 
     user = User()
-    user.from_dict(data, new_user=True)
+    user.create_user(**data)
     db.session.add(user)
     db.session.commit()
 
@@ -43,7 +44,7 @@ def create_user():
     return response
 
 
-@bp.route('/users/<int:id>', methods=['PUT'])
+@bp.route('/users/<id>', methods=['PUT'])
 @token_auth.login_required
 def update_user(id):
     user = User.query.get_or_404(id)
@@ -58,6 +59,7 @@ def update_user(id):
         if new_email != user.email and User.query.filter_by(email=new_email).first():
             return bad_request('please use a different email address')
 
-    user.from_dict(data, new_user=False)
+    user.from_dict(**data)
+    user.modified_at = datetime.utcnow()
     db.session.commit()
     return jsonify(user.to_dict())

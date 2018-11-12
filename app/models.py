@@ -4,35 +4,8 @@ import os
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import url_for
 from flask_login import UserMixin
-from app import login
-from app import db
-
-
-class PaginatedApiMixin:
-    """
-    Klasa, umożliwiająca podzielenie wyników zapytania na strony.
-    Wzięta z rozdziału ostatniego o API
-    Na podstawie podobnego rozwiązania z rozdziału 16
-    Na razie wpisałem część funkcjonalności...
-    """
-    @staticmethod
-    def to_collection_dict(query, page, per_page, endpoint, **kwargs):
-        resources = query.paginate(page, per_page, error_out=False)
-        data = {
-            'items': [item.to_dict() for item in resources.items],
-            '_meta': {
-                'page': page,
-                'per_page': per_page,
-                'total_pages': resources.pages,
-                'total_items': resources.total
-            },
-            '_links': {
-                'self': url_for(endpoint, page=page, per_page=per_page, **kwargs),
-                'next': url_for(endpoint, page=page + 1, per_page=per_page, **kwargs) if resources.has_next else None,
-                'prev': url_for(endpoint, page=page - 1, per_page=per_page, **kwargs) if resources.has_prev else None
-            }
-        }
-        return data
+from app import login, db
+from app.apihelper import PaginatedApiMixin, ApiBaseModel
 
 
 users_fisheries = db.Table('users_fisheries',
@@ -41,23 +14,51 @@ users_fisheries = db.Table('users_fisheries',
                            )
 
 
-class User(PaginatedApiMixin, UserMixin, db.Model):
+class User(PaginatedApiMixin, UserMixin, ApiBaseModel):
     """ 'user' table in database
         class UserMixin adds: is_authenticated, is_active, is_anonymous, get_id()
     """
     id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    modified_at = db.Column(db.DateTime)
     username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
+    email_confirmed = db.Column(db.Boolean)                         # dopisać obsługę
     password_hash = db.Column(db.String(128))
     token = db.Column(db.String(32), index=True, unique=True)
     token_expiration = db.Column(db.DateTime)
+    last_seen = db.Column(db.DateTime, default=datetime.utcnow)     # to nie działa dla api
     about_me = db.Column(db.String(140))
-    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     posts = db.relationship('Post', backref='author', lazy='dynamic')
     fisheries = db.relationship('Fishery', backref='author', lazy='dynamic')
 
+    _default_fields = [
+        'username',
+        'last_seen',
+        'about_me',
+        'joined_recently',
+        'links'
+    ]
+    _hidden_fields = [
+        'password_hash',
+        'token',
+        'token_expiration'
+    ]
+    _readonly_fields = [
+        'email_confirmed',
+        'modified_at'
+    ]
+
     def __repr__(self):
         return f'<User {self.username}>'
+
+    @property
+    def joined_recently(self):
+        return self.created_at > datetime.utcnow() - timedelta(days=3)
+
+    @property
+    def links(self):
+        return {'self': url_for('api.get_user', id=self.id)}
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -65,28 +66,10 @@ class User(PaginatedApiMixin, UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    def to_dict(self, include_email=False):
-        data = {
-            'id': self.id,
-            'username': self.username,
-            'about_me': self.about_me,
-            'last_seen': self.last_seen.isoformat() + 'Z',
-            '_links': {
-                'self': url_for('api.get_user', id=self.id)
-            }
-        }
-        if include_email:
-            data['email'] = self.email
-
-        return data
-
-    def from_dict(self, data, new_user=False):
-        for field in ['username', 'email', 'about_me']:
-            if field in data:
-                setattr(self, field, data[field])
-
-        if new_user and 'password' in data:
-            self.set_password(data['password'])
+    def create_user(self, **kwargs):
+        password = kwargs.pop('password')
+        self.from_dict(**kwargs)
+        self.set_password(password)
 
     def get_token(self, expires_in=3600):
         now = datetime.utcnow()
@@ -120,8 +103,10 @@ class Post(db.Model):
         return f'<Post {self.body}>'
 
 
-class Fishery(PaginatedApiMixin, db.Model):
+class Fishery(PaginatedApiMixin, ApiBaseModel):
     id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    modified_at = db.Column(db.DateTime)
     reservoir_name = db.Column(db.String(40), index=True)
     country = db.Column(db.String(40), index=True)
     place = db.Column(db.String(140))
@@ -129,27 +114,22 @@ class Fishery(PaginatedApiMixin, db.Model):
     latitude = db.Column(db.Float)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
 
+    _default_fields = {
+        'reservoir_name',
+        'country',
+        'place',
+        'longitude',
+        'latitude'
+    }
+    _hidden_fields = {}
+    _readonly_fields = {}
+
     def __repr__(self):
         return f'<Fishery {self.reservoir_name}>'
 
-    def to_dict(self):
-        data = {
-            'id': self.id,
-            'reservoir_name': self.reservoir_name,
-            'country': self.country,
-            'place': self.place,
-            'longitude': self.longitude,
-            'latitude': self.latitude,
-            '_links': {
-                'self': url_for('api.get_fishery', id=self.id)
-            }
-        }
-        return data
-
-    def from_dict(self, data):
-        for field in ['reservoir_name', 'country', 'place', 'longitude', 'latitude']:
-            if field in data:
-                setattr(self, field, data[field])
+    @property
+    def links(self):
+        return {'self': url_for('api.get_fishery', id=self.id)}
 
 
 @login.user_loader
