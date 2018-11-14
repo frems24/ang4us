@@ -100,9 +100,9 @@ class Post(db.Model):
     body = db.Column(db.String(140))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
-    _default_fields = {
+    _default_fields = [
         'body'
-    }
+    ]
 
     def __repr__(self):
         return f'<Post {self.body}>'
@@ -119,15 +119,15 @@ class Fishery(PaginatedApiMixin, ApiBaseModel):
     latitude = db.Column(db.Float)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
 
-    _default_fields = {
+    _default_fields = [
         'reservoir_name',
         'country',
         'place',
         'longitude',
         'latitude'
-    }
-    _hidden_fields = {}
-    _readonly_fields = {}
+    ]
+    _hidden_fields = []
+    _readonly_fields = []
 
     def __repr__(self):
         return f'<Fishery {self.reservoir_name}>'
@@ -146,14 +146,14 @@ class Fish(PaginatedApiMixin, ApiBaseModel):
     photos = db.Column(db.String(80))
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
 
-    _default_fields = {
+    _default_fields = [
         'species',
         'description',
         'photos'
-    }
+    ]
 
-    _hidden_fields = {}
-    _readonly_fields = {}
+    _hidden_fields = []
+    _readonly_fields = []
 
 
 @login.user_loader
