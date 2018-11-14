@@ -95,9 +95,14 @@ class User(PaginatedApiMixin, UserMixin, ApiBaseModel):
 class Post(db.Model):
     """ 'post' table in database """
     id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    modified_at = db.Column(db.DateTime)
     body = db.Column(db.String(140))
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+    _default_fields = {
+        'body'
+    }
 
     def __repr__(self):
         return f'<Post {self.body}>'
@@ -130,6 +135,25 @@ class Fishery(PaginatedApiMixin, ApiBaseModel):
     @property
     def links(self):
         return {'self': url_for('api.get_fishery', id=self.id)}
+
+
+class Fish(PaginatedApiMixin, ApiBaseModel):
+    id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    modified_at = db.Column(db.DateTime)
+    species = db.Column(db.String(40), index=True, unique=True)
+    description = db.Column(db.String(140))
+    photos = db.Column(db.String(80))
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+    _default_fields = {
+        'species',
+        'description',
+        'photos'
+    }
+
+    _hidden_fields = {}
+    _readonly_fields = {}
 
 
 @login.user_loader
