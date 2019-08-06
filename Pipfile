@@ -10,12 +10,9 @@ flask-wtf = "*"
 flask-sqlalchemy = "*"
 flask-migrate = "*"
 flask-login = "*"
-gunicorn = "*"
-pymysql = "*"
 flask-httpauth = "*"
 
 [dev-packages]
-httpie = "*"
 
 [requires]
-python_version = "3.6.6"
+python_version = "3.7.4"
